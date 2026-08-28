@@ -11,11 +11,15 @@ ENV TZ=Asia/Shanghai
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
+# Docker BuildKit 自动提供
+# amd64 / arm64
+ARG TARGETARCH
+
 # ============================================================
 # MySQL
 # ============================================================
 
-ENV MYSQL_VERSION=8.0.46
+ENV MYSQL_VERSION=8.4.11
 ENV MYSQL_BASE=/usr/local/mysql
 ENV MYSQL_DATA=/var/lib/mysql
 
@@ -52,7 +56,12 @@ RUN export http_proxy="${HTTP_PROXY}" && \
         /etc/apt/apt.conf.d/80-pipeline
 
 # ============================================================
-# 2. 安装 MySQL 8.0.46 ARM64 Generic Binary
+# 2. 安装 MySQL 8.4.11 Generic Binary
+#
+# 自动根据 Debian 容器架构选择：
+#
+# amd64 -> x86_64
+# arm64 -> aarch64
 # ============================================================
 
 RUN groupadd -r mysql && \
@@ -72,17 +81,39 @@ RUN groupadd -r mysql && \
     export https_proxy="${HTTPS_PROXY}" && \
     export HTTP_PROXY="${HTTP_PROXY}" && \
     export HTTPS_PROXY="${HTTPS_PROXY}" && \
+    ARCH="$(dpkg --print-architecture)" && \
+    if [ "${ARCH}" = "amd64" ]; then \
+        MYSQL_ARCH="x86_64"; \
+    elif [ "${ARCH}" = "arm64" ]; then \
+        MYSQL_ARCH="aarch64"; \
+    else \
+        echo "ERROR: Unsupported architecture: ${ARCH}"; \
+        echo "Supported architectures: amd64, arm64"; \
+        exit 1; \
+    fi && \
+    echo "========================================" && \
+    echo "Installing MySQL ${MYSQL_VERSION}" && \
+    echo "Debian ARCH : ${ARCH}" && \
+    echo "MySQL ARCH  : ${MYSQL_ARCH}" && \
+    echo "========================================" && \
     wget -q \
-        https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-8.0.46-linux-glibc2.28-aarch64.tar.xz \
+        "https://dev.mysql.com/get/Downloads/MySQL-8.4/mysql-${MYSQL_VERSION}-linux-glibc2.28-${MYSQL_ARCH}.tar.xz" \
         -O /tmp/mysql.tar.xz && \
     tar -xJf /tmp/mysql.tar.xz -C /usr/local && \
     mv \
-        /usr/local/mysql-8.0.46-linux-glibc2.28-aarch64 \
-        ${MYSQL_BASE} && \
+        "/usr/local/mysql-${MYSQL_VERSION}-linux-glibc2.28-${MYSQL_ARCH}" \
+        "${MYSQL_BASE}" && \
     rm -f /tmp/mysql.tar.xz && \
-    ln -sf ${MYSQL_BASE}/bin/mysql /usr/local/bin/mysql && \
-    ln -sf ${MYSQL_BASE}/bin/mysqld /usr/local/bin/mysqld && \
-    ln -sf ${MYSQL_BASE}/bin/mysqladmin /usr/local/bin/mysqladmin
+    ln -sf \
+        "${MYSQL_BASE}/bin/mysql" \
+        /usr/local/bin/mysql && \
+    ln -sf \
+        "${MYSQL_BASE}/bin/mysqld" \
+        /usr/local/bin/mysqld && \
+    ln -sf \
+        "${MYSQL_BASE}/bin/mysqladmin" \
+        /usr/local/bin/mysqladmin && \
+    chown -R mysql:mysql "${MYSQL_BASE}"
 
 # ============================================================
 # 3. MySQL 配置
@@ -137,13 +168,21 @@ RUN chmod 755 /entrypoint.sh
 # 8. Volume
 # ============================================================
 
-VOLUME ["/var/lib/mysql", "/var/lib/redis", "/opt/app"]
+VOLUME [ \
+    "/var/lib/mysql", \
+    "/var/lib/redis", \
+    "/opt/app" \
+]
 
 # ============================================================
 # 9. 端口
 # ============================================================
 
-EXPOSE 80 443 3306 6379 8080
+EXPOSE 80
+EXPOSE 443
+EXPOSE 3306
+EXPOSE 6379
+EXPOSE 8080
 
 # ============================================================
 # 10. 启动

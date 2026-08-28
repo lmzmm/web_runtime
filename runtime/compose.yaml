@@ -1,7 +1,7 @@
 services:
 
   runtime:
-    image: runtime:1.5
+    image: runtime:1.6
     container_name: runtime
     restart: unless-stopped
 
