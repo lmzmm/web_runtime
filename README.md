@@ -22,7 +22,7 @@ All-in-one 开发/运行时容器，集成 MySQL 8.0、Redis、Nginx 和 Java 17
 
 | 组件 | 版本 | 端口 | 说明 |
 |------|------|------|------|
-| MySQL | 8.0.46 | 3306 | ARM64 Generic Binary |
+| MySQL | 8.0.46 | 3306 | x86/ARM64 Generic Binary |
 | Redis | Debian 默认 | 6379 | 密码认证 |
 | Nginx | Debian 默认 | 80, 443 | 静态资源反向代理 |
 | Java (JRE) | OpenJDK 17 | 8080 | Spring Boot 运行环境 |
@@ -147,7 +147,7 @@ volumes:
 ### 基础构建
 
 ```bash
-docker build -t runtime:1.5 .
+docker build -t runtime:1.6 .
 ```
 
 ### 使用代理构建
