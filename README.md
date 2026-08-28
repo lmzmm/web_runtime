@@ -118,7 +118,7 @@ volumes:
 
 ### JVM 参数
 
-默认启动命令为 `java -jar <jar-file>`。如需自定义 JVM 参数，可以在 JAR 同级目录创建 `start.sh` 启动脚本（TODO），或修改 Supervisor 配置。
+默认启动命令为 `java -jar <jar-file>`。如需自定义 JVM 参数，可以修改 Supervisor 配置。
 
 ## 部署前端资源
 
