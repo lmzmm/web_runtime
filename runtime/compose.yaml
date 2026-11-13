@@ -33,10 +33,10 @@ services:
     volumes:
 
       # 前端静态资源
-      - /data/ai-model-manage/dist:/data/ai-model-manage/dist
+      - example/dist:/data/ai-model-manage/dist
 
       # Java jar 包目录
-      - /data/ai-model-manage/java:/opt/app
+      - example/java:/opt/app
 
       # ======================================================
       # 如果需要持久化 MySQL
